@@ -1,4 +1,5 @@
 from .pdf import *
+from .svg import *
 
 VERSION = "1.0.0"
 GIT_URL = "https://github.com/yourusername/autotask_fileConvert"
