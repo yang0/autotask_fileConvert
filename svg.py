@@ -6,19 +6,33 @@ except ImportError:
 from typing import Dict, Any
 import os
 from PIL import Image
-from wand.image import Image as WandImage
+import cairosvg
 from io import BytesIO
 
 def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
-    """Convert SVG to Image using Wand"""
+    """Convert SVG to Image using CairoSVG with high quality"""
     try:
-        with WandImage(filename=svg_path) as img:
-            # 调整大小
-            img.resize(width, height)
-            # 转换为PNG格式的字节流
-            img_buffer = img.make_blob(format='png')
-            # 转换为PIL Image
-            return Image.open(BytesIO(img_buffer))
+        # 使用更大的尺寸进行初始渲染以保证质量
+        scale_factor = 2
+        render_width = width * scale_factor
+        render_height = height * scale_factor
+        
+        # 使用cairosvg直接转换为PNG
+        png_data = cairosvg.svg2png(
+            url=svg_path,
+            output_width=render_width,
+            output_height=render_height,
+            scale=1.0
+        )
+        
+        # 转换为PIL Image
+        img = Image.open(BytesIO(png_data))
+        
+        # 缩放到目标尺寸
+        if img.size != (width, height):
+            img = img.resize((width, height), Image.Resampling.LANCZOS)
+        
+        return img
     except Exception as e:
         raise Exception(f"Failed to convert SVG: {str(e)}")
 
@@ -26,7 +40,23 @@ def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
 class SVGToImageNode(Node):
     """Convert SVG file to PNG/JPEG with specified dimensions"""
     NAME = "SVG to Image Converter"
-    DESCRIPTION = "Convert SVG file to PNG/JPEG with custom dimensions"
+    DESCRIPTION = """Convert SVG file to PNG/JPEG with custom dimensions
+    对于 Windows：
+    下载并安装 GTK3 运行时环境：
+        访问：https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
+        下载最新的 .exe 安装包（如 gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe）
+        运行安装程序，按默认选项安装
+    安装完成后重启系统
+    对于 Linux (Ubuntu/Debian)：
+        sudo apt-get update
+        sudo apt-get install libcairo2-dev pkg-config python3-dev
+    对于 CentOS/RHEL：
+        sudo yum install cairo-devel
+    对于 MacOS：
+        brew install cairo
+    安装完系统依赖后，重新安装 Python 包：
+        pip install cairosvg
+    """
 
     INPUTS = {
         "svg_file": {
