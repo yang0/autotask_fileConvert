@@ -12,28 +12,70 @@ from io import BytesIO
 def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
     """Convert SVG to Image using CairoSVG with high quality"""
     try:
-        # 使用更大的尺寸进行初始渲染以保证质量
-        scale_factor = 2
+        with open(svg_path, 'r') as f:
+            svg_content = f.read()
+            print(f"SVG Content:\n{svg_content}")
+
+        # 增加缩放因子
+        scale_factor = 8
         render_width = width * scale_factor
         render_height = height * scale_factor
         
-        # 使用cairosvg直接转换为PNG
-        png_data = cairosvg.svg2png(
-            url=svg_path,
-            output_width=render_width,
-            output_height=render_height,
-            scale=1.0
+        print(f"Rendering parameters:")
+        print(f"- Original size: {width}x{height}")
+        print(f"- Render size: {render_width}x{render_height}")
+        print(f"- Scale factor: {scale_factor}")
+        
+        # 修改SVG内容，添加preserveAspectRatio属性和透明背景
+        svg_content = svg_content.replace(
+            '<svg ',
+            '<svg style="background-color: transparent;" preserveAspectRatio="xMidYMid meet" '
         )
         
-        # 转换为PIL Image
-        img = Image.open(BytesIO(png_data))
+        # 使用cairosvg转换，确保透明背景
+        png_data = cairosvg.svg2png(
+            bytestring=svg_content.encode('utf-8'),
+            output_width=render_width,
+            output_height=render_height,
+            scale=2.0,
+            dpi=300,
+            unsafe=True,
+            background_color="transparent"  # 确保背景透明
+        )
         
-        # 缩放到目标尺寸
-        if img.size != (width, height):
-            img = img.resize((width, height), Image.Resampling.LANCZOS)
+        # 设置PIL的解压缩炸弹限制
+        original_max_pixels = Image.MAX_IMAGE_PIXELS
+        Image.MAX_IMAGE_PIXELS = None
         
-        return img
+        try:
+            # 转换为PIL Image并保持透明度
+            img = Image.open(BytesIO(png_data))
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            
+            print(f"Intermediate image size: {img.size}")
+            print(f"Intermediate image mode: {img.mode}")
+            
+            # 使用高质量的缩放算法，保持透明度
+            if img.size != (width, height):
+                print(f"Resizing from {img.size} to {width}x{height}")
+                img = img.resize((width, height), Image.Resampling.LANCZOS)
+            
+            # 保存调试图像，保持透明度
+            debug_path = os.path.join(os.path.dirname(svg_path), "debug_output.png")
+            img.save(debug_path, 'PNG')  # 移除optimize和transparency参数
+            print(f"Debug image saved to: {debug_path}")
+            
+            return img
+            
+        finally:
+            # 恢复PIL的限制
+            Image.MAX_IMAGE_PIXELS = original_max_pixels
+            
     except Exception as e:
+        print(f"Error details: {str(e)}")
+        import traceback
+        print(f"Stack trace:\n{traceback.format_exc()}")
         raise Exception(f"Failed to convert SVG: {str(e)}")
 
 @register_node
@@ -119,18 +161,14 @@ class SVGToImageNode(Node):
             # 转换SVG到图片
             img = svg_to_image(svg_path, width, height)
             
-            # 处理JPEG格式
-            if format == "JPEG":
-                if img.mode == 'RGBA':
-                    background = Image.new('RGB', img.size, (255, 255, 255))
-                    background.paste(img, mask=img.split()[3])
-                    img = background
-            
             # 保存图片
             if format == "PNG":
-                img.save(output_path, 'PNG', optimize=True)
+                img.save(output_path, 'PNG')  # 移除optimize和transparency参数
             else:
-                img.save(output_path, 'JPEG', quality=95, optimize=True)
+                # JPEG不支持透明度，使用白色背景
+                background = Image.new('RGB', img.size, (255, 255, 255))
+                background.paste(img, mask=img.split()[3])
+                background.save(output_path, 'JPEG', quality=95, optimize=True)
 
             workflow_logger.info(f"Successfully converted SVG to {format}: {output_path}")
             
