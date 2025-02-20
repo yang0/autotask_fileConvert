@@ -80,9 +80,7 @@ def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
 
 @register_node
 class SVGToImageNode(Node):
-    """Convert SVG file to PNG/JPEG with specified dimensions"""
-    NAME = "SVG to Image Converter"
-    DESCRIPTION = """Convert SVG file to PNG/JPEG with custom dimensions
+    """Convert SVG file to PNG/JPEG with specified dimensions
     对于 Windows：
     下载并安装 GTK3 运行时环境：
         访问：https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases
@@ -99,6 +97,8 @@ class SVGToImageNode(Node):
     安装完系统依赖后，重新安装 Python 包：
         pip install cairosvg
     """
+    NAME = "SVG to Image Converter"
+    DESCRIPTION = "Convert SVG file to PNG/JPEG with custom dimension"
 
     INPUTS = {
         "svg_file": {
