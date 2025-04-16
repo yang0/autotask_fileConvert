@@ -1,6 +1,5 @@
-from .pdf import *
 from .svg import *
-
+from .icon import *
 VERSION = "0.0.1"
 GIT_URL = "https://github.com/yourusername/autotask_fileConvert"
 NAME = "File Format Converter"

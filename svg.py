@@ -3,11 +3,17 @@ try:
 except ImportError:
     from stub import Node, GeneratorNode, ConditionalNode, register_node
 
+import sys
+print("hasattr(sys, 'frozen') :", hasattr(sys, 'frozen') )
+print("sys.path:", sys.path)
+
 from typing import Dict, Any
 import os
 from PIL import Image
+
 import cairosvg
 from io import BytesIO
+
 
 def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
     """Convert SVG to Image using CairoSVG with high quality"""
