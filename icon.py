@@ -116,14 +116,15 @@ class ImageToIconNode(Node):
         "image_file": {
             "label": "Image File Path",
             "description": "Path to the input image file (PNG recommended)",
-            "type": "STRING",
+            "type": "IMAGEUPLOAD",
             "required": True
         },
         "output_dir": {
             "label": "Output Directory",
             "description": "Directory for the output icon file",
             "type": "STRING",
-            "required": True
+            "required": True,
+            "widget": "DIR"
         },
         "format": {
             "label": "Icon Format",
@@ -143,7 +144,7 @@ class ImageToIconNode(Node):
         }
     }
 
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
             image_path = node_inputs["image_file"]
             output_dir = node_inputs["output_dir"]

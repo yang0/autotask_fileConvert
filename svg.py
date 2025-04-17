@@ -11,8 +11,16 @@ from typing import Dict, Any
 import os
 from PIL import Image
 
+frozen_state = getattr(sys, 'frozen', None)
+if frozen_state is not None:
+    delattr(sys, 'frozen')
+
 import cairosvg
 from io import BytesIO
+
+# Restore the frozen state if it existed
+if frozen_state is not None:
+    setattr(sys, 'frozen', frozen_state)
 
 
 def svg_to_image(svg_path: str, width: int, height: int) -> Image.Image:
@@ -110,8 +118,8 @@ class SVGToImageNode(Node):
         "svg_file": {
             "label": "SVG File Path",
             "description": "Path to the SVG file to convert",
-            "type": "STRING",
-            "required": True
+            "type": "IMAGEUPLOAD",
+            "required": True,
         },
         "width": {
             "label": "Width",
@@ -129,7 +137,8 @@ class SVGToImageNode(Node):
             "label": "Output Directory",
             "description": "Directory for the output image file",
             "type": "STRING",
-            "required": True
+            "required": True,
+            "widget": "DIR"
         },
         "format": {
             "label": "Output Format",
@@ -149,7 +158,7 @@ class SVGToImageNode(Node):
         }
     }
 
-    def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
+    async def execute(self, node_inputs: Dict[str, Any], workflow_logger) -> Dict[str, Any]:
         try:
             svg_path = node_inputs["svg_file"]
             width = int(node_inputs["width"])
