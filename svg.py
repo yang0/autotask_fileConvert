@@ -4,8 +4,8 @@ except ImportError:
     from stub import Node, GeneratorNode, ConditionalNode, register_node
 
 import sys
-print("hasattr(sys, 'frozen') :", hasattr(sys, 'frozen') )
-print("sys.path:", sys.path)
+# print("hasattr(sys, 'frozen') :", hasattr(sys, 'frozen') )
+# print("sys.path:", sys.path)
 
 from typing import Dict, Any
 import os
